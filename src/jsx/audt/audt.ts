@@ -26,3 +26,15 @@ export function openSesxFile(filePath: string) {
     return false;
   }
 }
+
+export function getActiveDocName() {
+  try {
+    if (app && app.activeDocument) {
+      return app.activeDocument.displayName;
+    } else {
+      return "";
+    }
+  } catch (e) {
+    return "Error: " + e;
+  }
+}
