@@ -2,6 +2,7 @@ import { AppShell, Accordion, Container, Stack, Title } from "@mantine/core";
 import { IconFolderPlus, IconFileUpload } from "@tabler/icons-react";
 import Header from "./components/Header";
 import CreateSessionForm from "./components/CreateSessionForm"; // 引入刚刚编写的创建会话组件
+import ExportSession from "./components/ExportSession";
 
 export const App = () => {
   return (
@@ -19,6 +20,8 @@ export const App = () => {
           <Accordion
             variant="separated"
             radius="md"
+            multiple
+            defaultValue={["export-session"]}
           >
             <Accordion.Item value="create-session">
               <Accordion.Control icon={<IconFolderPlus size={20} />}>
@@ -34,7 +37,7 @@ export const App = () => {
                 <Title order={5}>导出会话</Title>
               </Accordion.Control>
               <Accordion.Panel>
-                <div>导出会话功能开发中...</div>
+                <ExportSession />
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion>

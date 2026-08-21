@@ -2,16 +2,16 @@ import { useLocalStorage } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 import { modals } from "@mantine/modals";
 import {
-    Paper,
-    TextInput,
-    Select,
-    Button,
-    Stack,
-    Title,
-    Text,
-    Group
+  Paper,
+  TextInput,
+  Select,
+  Button,
+  Stack,
+  Title,
+  Text,
+  Group
 } from "@mantine/core";
-import { IconFolderPlus, IconAlertCircle } from "@tabler/icons-react";
+import { IconFolderPlus } from "@tabler/icons-react";
 
 import { fs, path } from "../../lib/cep/node";
 import { evalTS } from "../../lib/utils/bolt";
@@ -685,142 +685,142 @@ const SESX_TEMPLATE = `<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 </sesx>`;
 
 interface FormValues {
-    sessionName: string;
-    sampleRate: string;
+  sessionName: string;
+  sampleRate: string;
 }
 
 export default function CreateSessionForm() {
-    const [workspacePath] = useLocalStorage<string>({
-        key: "au-cep-workspace-path",
-        defaultValue: "",
-    });
+  const [workspacePath] = useLocalStorage<string>({
+    key: "au-cep-workspace-path",
+    defaultValue: "",
+  });
 
-    const form = useForm<FormValues>({
-        initialValues: {
-            sessionName: "",
-            sampleRate: "48000",
+  const form = useForm<FormValues>({
+    initialValues: {
+      sessionName: "",
+      sampleRate: "48000",
+    },
+
+    validate: {
+      sessionName: (value) => {
+        if (!value.trim()) return "请输入会话名称";
+        if (/[\\/:*?"<>|]/.test(value)) return "会话名称不能包含字符: \\ / : * ? \" < > |";
+        return null;
+      },
+    },
+  });
+
+  const handleSubmit = (values: FormValues) => {
+    if (!workspacePath) {
+      modals.openContextModal({
+        modal: "alertModal",
+        title: "未设置工作区目录",
+        innerProps: {
+          message: "请先在顶部设置工作区目录，再创建会话。",
+          type: "error",
         },
+      });
+      return;
+    }
 
-        validate: {
-            sessionName: (value) => {
-                if (!value.trim()) return "请输入会话名称";
-                if (/[\\/:*?"<>|]/.test(value)) return "会话名称不能包含字符: \\ / : * ? \" < > |";
-                return null;
-            },
+    if (!fs.existsSync(workspacePath)) {
+      modals.openContextModal({
+        modal: "alertModal",
+        title: "工作区目录无效",
+        innerProps: {
+          message: "当前设置的工作区目录在磁盘上不存在，请重新选择。",
+          type: "error",
         },
-    });
+      });
+      return;
+    }
 
-    const handleSubmit = (values: FormValues) => {
-        if (!workspacePath) {
-            modals.openContextModal({
-                modal: "alertModal",
-                title: "未设置工作区目录",
-                innerProps: {
-                    message: "请先在顶部设置工作区目录，再创建会话。",
-                    type: "error",
-                },
-            });
-            return;
-        }
+    const sessionDir = path.join(workspacePath, values.sessionName.trim());
 
-        if (!fs.existsSync(workspacePath)) {
-            modals.openContextModal({
-                modal: "alertModal",
-                title: "工作区目录无效",
-                innerProps: {
-                    message: "当前设置的工作区目录在磁盘上不存在，请重新选择。",
-                    type: "error",
-                },
-            });
-            return;
-        }
+    if (fs.existsSync(sessionDir)) {
+      modals.openContextModal({
+        modal: "alertModal",
+        title: "创建失败",
+        innerProps: {
+          message: (
+            <>
+              工作区中已存在名为 <Text span fw={700}>“{values.sessionName.trim()}”</Text> 的会话文件夹，请更换会话名称。
+            </>
+          ),
+          type: "error",
+          buttonText: "我知道了",
+        },
+      });
+      return;
+    }
 
-        const sessionDir = path.join(workspacePath, values.sessionName.trim());
+    try {
+      if (fs.mkdirSync) {
+        fs.mkdirSync(sessionDir, { recursive: true });
+      }
 
-        if (fs.existsSync(sessionDir)) {
-            modals.openContextModal({
-                modal: "alertModal",
-                title: "创建失败",
-                innerProps: {
-                    message: (
-                        <>
-                            工作区中已存在名为 <Text span fw={700}>“{values.sessionName.trim()}”</Text> 的会话文件夹，请更换会话名称。
-                        </>
-                    ),
-                    type: "error",
-                    buttonText: "我知道了",
-                },
-            });
-            return;
-        }
+      const updatedSesxContent = SESX_TEMPLATE.replace(
+        /sampleRate="48000"/,
+        `sampleRate="${values.sampleRate}"`
+      );
 
-        try {
-            if (fs.mkdirSync) {
-                fs.mkdirSync(sessionDir, { recursive: true });
-            }
+      const sesxFilePath = path.join(sessionDir, `${values.sessionName.trim()}.sesx`);
+      if (fs.writeFileSync) {
+        fs.writeFileSync(sesxFilePath, updatedSesxContent, "utf-8");
+      }
 
-            const updatedSesxContent = SESX_TEMPLATE.replace(
-                /sampleRate="48000"/,
-                `sampleRate="${values.sampleRate}"`
-            );
+      const normalizedPath = sesxFilePath.replace(/\\/g, "/");
+      evalTS("openSesxFile", normalizedPath);
+    } catch (err: any) {
+      console.error("创建会话失败:", err);
+      modals.openContextModal({
+        modal: "alertModal",
+        title: "文件操作失败",
+        innerProps: {
+          message: `无法创建文件夹或文件: ${err?.message || "未知错误"}`,
+          type: "error",
+        },
+      });
+    }
+  };
 
-            const sesxFilePath = path.join(sessionDir, `${values.sessionName.trim()}.sesx`);
-            if (fs.writeFileSync) {
-                fs.writeFileSync(sesxFilePath, updatedSesxContent, "utf-8");
-            }
+  return (
+    <Paper p="md" radius="md" withBorder style={{ maxWidth: 450, margin: "20px auto" }}>
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack gap="md">
+          <Group gap="xs">
+            <IconFolderPlus size={24} />
+            <Title order={4}>新建 Audition 会话</Title>
+          </Group>
 
-            const normalizedPath = sesxFilePath.replace(/\\/g, "/");
-            evalTS("openSesxFile", normalizedPath);
-        } catch (err: any) {
-            console.error("创建会话失败:", err);
-            modals.openContextModal({
-                modal: "alertModal",
-                title: "文件操作失败",
-                innerProps: {
-                    message: `无法创建文件夹或文件: ${err?.message || "未知错误"}`,
-                    type: "error",
-                },
-            });
-        }
-    };
+          <TextInput
+            label="会话名称"
+            placeholder="请输入会话名称（如：Podcast_Episode_01）"
+            required
+            withAsterisk
+            {...form.getInputProps("sessionName")}
+          />
 
-    return (
-        <Paper p="md" radius="md" withBorder style={{ maxWidth: 450, margin: "20px auto" }}>
-            <form onSubmit={form.onSubmit(handleSubmit)}>
-                <Stack gap="md">
-                    <Group gap="xs">
-                        <IconFolderPlus size={24} />
-                        <Title order={4}>新建 Audition 会话</Title>
-                    </Group>
+          <Select
+            label="采样率"
+            data={[
+              { value: "48000", label: "48000 Hz (推荐)" },
+              { value: "44100", label: "44100 Hz" },
+            ]}
+            allowDeselect={false}
+            required
+            {...form.getInputProps("sampleRate")}
+          />
 
-                    <TextInput
-                        label="会话名称"
-                        placeholder="请输入会话名称（如：Podcast_Episode_01）"
-                        required
-                        withAsterisk
-                        {...form.getInputProps("sessionName")}
-                    />
-
-                    <Select
-                        label="采样率"
-                        data={[
-                            { value: "48000", label: "48000 Hz (推荐)" },
-                            { value: "44100", label: "44100 Hz" },
-                        ]}
-                        allowDeselect={false}
-                        required
-                        {...form.getInputProps("sampleRate")}
-                    />
-
-                    <Button
-                        type="submit"
-                        fullWidth
-                        mt="xs"
-                    >
-                        确定创建
-                    </Button>
-                </Stack>
-            </form>
-        </Paper>
-    );
+          <Button
+            type="submit"
+            fullWidth
+            mt="xs"
+          >
+            确定创建
+          </Button>
+        </Stack>
+      </form>
+    </Paper>
+  );
 }
