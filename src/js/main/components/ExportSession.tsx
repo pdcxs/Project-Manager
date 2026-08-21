@@ -3,6 +3,7 @@ import { Button, Center } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { evalTS } from "../../lib/utils/bolt";
 import { child_process } from "../../lib/cep/node";
+import { zipDirectory } from "../../lib/utils/zip";
 
 export default function ExportSession() {
     const [loading, setLoading] = useState(false);
@@ -61,15 +62,19 @@ export default function ExportSession() {
                 const pathParts = standardizedPath.split("/");
 
                 // 3. 截掉文件名和项目子目录，拿到 Export 根目录路径
-                // pathParts.length - 1 是 .sesx 文件名
-                // pathParts.length - 2 是 项目子目录 (project)
-                // pathParts.length - 3 就是 Export 目录
+                // 假设结构为: .../Export/会话名称/会话名称.sesx
+                // sessionFolder -> .../Export/会话名称
+                // exportFolderPath -> .../Export
                 let exportFolderPath = standardizedPath;
+                let sessionFolder = standardizedPath;
                 if (pathParts.length >= 3) {
+                    sessionFolder = pathParts.slice(0, pathParts.length - 1).join("/");
                     exportFolderPath = pathParts.slice(0, pathParts.length - 2).join("/");
                 } else if (pathParts.length >= 2) {
-                    exportFolderPath = pathParts.slice(0, pathParts.length - 1).join("/");
+                    sessionFolder = pathParts.slice(0, pathParts.length - 1).join("/");
+                    exportFolderPath = sessionFolder;
                 }
+                const zipOutputPath = `${sessionFolder}.zip`;
 
                 const isWin = typeof process !== "undefined" && process.platform === "win32";
 
@@ -78,7 +83,7 @@ export default function ExportSession() {
                     ? exportFolderPath.replace(/\//g, "\\")
                     : exportFolderPath.replace(/\\/g, "/");
 
-                const openExportFolder = () => {
+                const zipAndOpenExportFolder = async () => {
                     try {
                         if (child_process.exec) {
                             if (isWin) {
@@ -87,8 +92,9 @@ export default function ExportSession() {
                                 child_process.exec(`open "${normalizedPath}"`);
                             }
                         }
+                        await zipDirectory(sessionFolder, zipOutputPath);
                     } catch (err) {
-                        console.error("打开文件夹失败:", err);
+                        console.error("打开文件夹或者压缩失败:", err);
                     }
                 }
 
@@ -96,10 +102,10 @@ export default function ExportSession() {
                     modal: "alertModal",
                     title: "导出会话成功",
                     innerProps: {
-                        message: `会话及音频素材已成功导出并转码为 MP3！\n保存路径：${normalizedPath}`,
+                        message: `会话及音频素材已成功导出并转码为 MP3！\n保存路径：${normalizedPath}\n请在导出完成后点击下方按钮`,
                         type: "success",
-                        buttonText: "打开导出目录",
-                        onConfirm: openExportFolder,
+                        buttonText: "压缩并打开目录",
+                        onConfirm: zipAndOpenExportFolder,
                     },
                 });
             }
