@@ -20,7 +20,11 @@ export default function Header() {
         );
 
         if (result.err === 0 && result.data && result.data.length > 0) {
-            setWorkspacePath(result.data[0]);
+            let rawPath = result.data[0];
+            if (rawPath.startsWith("file://")) {
+            rawPath = rawPath.replace(/^file:\/\/(localhost)?/, "");
+        }
+            setWorkspacePath(rawPath);
         }
     };
 
