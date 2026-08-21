@@ -6,16 +6,15 @@ interface AlertModalInnerProps {
     message: string | React.ReactNode;
     type?: "error" | "success" | "info";
     buttonText?: string;
+    onConfirm?: () => void;
 }
-
 export default function AlertModal({
     context,
     id,
     innerProps,
 }: ContextModalProps<AlertModalInnerProps>) {
-    const { message, type = "error", buttonText = "我知道了" } = innerProps;
+    const { message, type = "error", buttonText = "我知道了", onConfirm } = innerProps;
 
-    // 根据类型显示不同颜色和图标
     const renderIcon = () => {
         switch (type) {
             case "error":
@@ -27,11 +26,18 @@ export default function AlertModal({
         }
     };
 
+    const handleButtonClick = () => {
+        context.closeModal(id);
+        if (onConfirm) {
+            onConfirm();
+        }
+    };
+
     return (
         <Stack gap="md">
             <Group gap="xs" wrap="nowrap" align="flex-start">
                 {renderIcon()}
-                <Text size="sm" style={{ flex: 1 }}>
+                <Text size="sm" style={{ flex: 1, whiteSpace: "pre-line" }}>
                     {message}
                 </Text>
             </Group>
@@ -39,7 +45,7 @@ export default function AlertModal({
             <Button
                 fullWidth
                 color={type === "error" ? "red" : type === "success" ? "green" : "blue"}
-                onClick={() => context.closeModal(id)}
+                onClick={handleButtonClick}
             >
                 {buttonText}
             </Button>
