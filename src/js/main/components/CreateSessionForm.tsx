@@ -714,9 +714,9 @@ export default function CreateSessionForm() {
     if (!workspacePath) {
       modals.openContextModal({
         modal: "alertModal",
-        title: "未设置工作区目录",
+        title: "未设置新建会话路径",
         innerProps: {
-          message: "请先在顶部设置工作区目录，再创建会话。",
+          message: "请先在顶部设置新建会话目录，再创建会话。",
           type: "error",
         },
       });
@@ -726,9 +726,9 @@ export default function CreateSessionForm() {
     if (!fs.existsSync(workspacePath)) {
       modals.openContextModal({
         modal: "alertModal",
-        title: "工作区目录无效",
+        title: "新建工程路径无效",
         innerProps: {
-          message: "当前设置的工作区目录在磁盘上不存在，请重新选择。",
+          message: "当前设置的工程（会话/多轨）路径在磁盘上不存在，请重新选择。",
           type: "error",
         },
       });
@@ -744,7 +744,7 @@ export default function CreateSessionForm() {
         innerProps: {
           message: (
             <>
-              工作区中已存在名为 <Text span fw={700}>“{values.sessionName.trim()}”</Text> 的会话文件夹，请更换会话名称。
+              工作区中已存在名为 <Text span fw={700}>“{values.sessionName.trim()}”</Text> 的工程（会话/多轨）文件夹，请更换会话名称。
             </>
           ),
           type: "error",
@@ -790,12 +790,12 @@ export default function CreateSessionForm() {
         <Stack gap="md">
           <Group gap="xs">
             <IconFolderPlus size={24} />
-            <Title order={4}>新建 Audition 会话</Title>
+            <Title order={4}>新建 AU 会话（多轨=工程）</Title>
           </Group>
 
           <TextInput
             label="会话名称"
-            placeholder="请输入会话名称（如：Podcast_Episode_01）"
+            placeholder="请输入会话名称（如：昵称-UID-第一周作业）"
             required
             withAsterisk
             {...form.getInputProps("sessionName")}
@@ -804,7 +804,7 @@ export default function CreateSessionForm() {
           <Select
             label="采样率"
             data={[
-              { value: "48000", label: "48000 Hz (推荐)" },
+              { value: "48000", label: "48000 Hz" },
               { value: "44100", label: "44100 Hz" },
             ]}
             allowDeselect={false}

@@ -14,7 +14,7 @@ export default function Header() {
         const result = window.cep.fs.showOpenDialog(
             false,
             true,
-            "选择工作区目录",
+            "选择新建会话路径",
             workspacePath || "",
             null
         );
@@ -38,12 +38,12 @@ export default function Header() {
 
     const handleOpenWorkspaceInExplorer = () => {
         if (!workspacePath) {
-            alert("工作区目录不存在，请重新设置！");
+            alert("新建会话路径不存在，请重新设置！");
             return;
         }
 
         if (fs.existsSync && !fs.existsSync(workspacePath)) {
-            alert("工作区目录不存在，请重新设置！");
+            alert("新建会话路径不存在，请重新设置！");
             return;
         }
 
@@ -68,13 +68,13 @@ export default function Header() {
             <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
 
                 {/* 左侧：齿轮 - 设置工作区目录 */}
-                <Tooltip label="设置工作区目录" position="bottom" withArrow>
+                <Tooltip label="设置新建会话路径" position="bottom" withArrow>
                     <ActionIcon
                         variant={workspacePath ? "light" : "filled"}
                         color={workspacePath ? "blue" : "red"}
                         size="lg"
                         onClick={handleSelectWorkspace}
-                        aria-label="设置工作区目录"
+                        aria-label="设置新建会话路径"
                     >
                         <IconSettings size={20} stroke={1.8} />
                     </ActionIcon>
@@ -82,12 +82,12 @@ export default function Header() {
 
                 {/* 中间：路径展示（未设置显示红色警告，超长自动从左截断保留尾部） */}
                 <Tooltip
-                    label={workspacePath || "请点击齿轮选择工作区目录"}
+                    label={workspacePath || "请点击齿轮选择新建路径"}
                     position="bottom"
                     withArrow
                 >
                     <Text
-                        size="xs"
+                        size={workspacePath ? "xs" : "lg"}
                         fw={workspacePath ? 400 : 600}
                         c={workspacePath ? "dimmed" : "red.6"}
                         style={{
@@ -101,19 +101,19 @@ export default function Header() {
                     >
                         {workspacePath
                             ? `\u200E${workspacePath}`
-                            : "请设置工作区目录..."}
+                            : "请设置新建会话路径..."}
                     </Text>
                 </Tooltip>
 
                 {/* 右侧 1：打开文件夹图标按钮 */}
-                <Tooltip label={workspacePath ? "在文件资源管理器中打开" : "请先设置工作区目录"} position="bottom" withArrow>
+                <Tooltip label={workspacePath ? "在文件资源管理器中打开" : "请先设置新建会话路径"} position="bottom" withArrow>
                     <ActionIcon
                         variant="subtle"
                         color="gray"
                         size="lg"
                         disabled={!workspacePath} // 未设置工作区目录时禁用
                         onClick={handleOpenWorkspaceInExplorer}
-                        aria-label="打开工作区目录"
+                        aria-label="打开新建会话路径"
                     >
                         <IconFolderOpen size={20} stroke={1.8} />
                     </ActionIcon>

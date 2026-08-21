@@ -1,17 +1,76 @@
 import { useState } from "react";
-import { Button, Center } from "@mantine/core";
+import { Button, Group, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { evalTS } from "../../lib/utils/bolt";
-import { child_process } from "../../lib/cep/node";
+import { child_process, path, fs } from "../../lib/cep/node";
 import { zipDirectory } from "../../lib/utils/zip";
+
+const exportFolderName = "工程管理助手";
 
 export default function ExportSession() {
     const [loading, setLoading] = useState(false);
 
+    const isWin = typeof process !== "undefined" && process.platform === "win32";
+
+    const getExportSessionFolder = async () => {
+        const docPath = await evalTS("getActiveDocPath");
+        const p = path.dirname(docPath);
+        const exptPath = path.join(p, exportFolderName);
+        const name = await evalTS("getActiveDocName");
+        const r = path.join(exptPath, name);
+        if (fs.existsSync(r))
+            return r;
+        return "";
+    }
+
+    const zipExportFolder = async () => {
+        const sp = await getExportSessionFolder();
+        if (sp === "") {
+            modals.openContextModal({
+                modal: "alertModal",
+                title: "会话未导出",
+                innerProps: {
+                    message: "当前多轨会话未导出，请先导出后再压缩",
+                    type: "error",
+                },
+            });
+            return;
+        }
+        await zipDirectory(sp, `${sp}.zip`);
+    }
+
+    const openExportFolder = async () => {
+        try {
+            const docPath = await evalTS("getActiveDocPath");
+            const p = path.dirname(docPath);
+            const exptPath = path.join(p, exportFolderName);
+            if (!fs.existsSync(exptPath)) {
+                modals.openContextModal({
+                    modal: "alertModal",
+                    title: "会话未导出",
+                    innerProps: {
+                        message: "当前多轨会话未导出，请先导出后再打开",
+                        type: "error",
+                    },
+                });
+                return;
+            }
+            if (child_process.exec) {
+                if (isWin) {
+                    child_process.exec(`explorer "${exptPath}"`);
+                } else {
+                    child_process.exec(`open "${exptPath}"`);
+                }
+            }
+        } catch (err) {
+            console.error("Error: ", err);
+        }
+    }
+
     const handleExport = async () => {
         setLoading(true);
         try {
-            const result = await evalTS("exportCurrentSession", "导出内容");
+            const result = await evalTS("exportCurrentSession", exportFolderName);
 
             if (result.startsWith("Error: NoActive")) {
                 modals.openContextModal({
@@ -74,38 +133,19 @@ export default function ExportSession() {
                     sessionFolder = pathParts.slice(0, pathParts.length - 1).join("/");
                     exportFolderPath = sessionFolder;
                 }
-                const zipOutputPath = `${sessionFolder}.zip`;
-
-                const isWin = typeof process !== "undefined" && process.platform === "win32";
 
                 // 4. 规范化系统路径分隔符
                 const normalizedPath = isWin
                     ? exportFolderPath.replace(/\//g, "\\")
                     : exportFolderPath.replace(/\\/g, "/");
 
-                const zipAndOpenExportFolder = async () => {
-                    try {
-                        if (child_process.exec) {
-                            if (isWin) {
-                                child_process.exec(`explorer "${normalizedPath}"`);
-                            } else {
-                                child_process.exec(`open "${normalizedPath}"`);
-                            }
-                        }
-                        await zipDirectory(sessionFolder, zipOutputPath);
-                    } catch (err) {
-                        console.error("打开文件夹或者压缩失败:", err);
-                    }
-                }
-
                 modals.openContextModal({
                     modal: "alertModal",
                     title: "导出会话成功",
                     innerProps: {
-                        message: `会话及音频素材已成功导出并转码为 MP3！\n保存路径：${normalizedPath}\n请在导出完成后点击下方按钮`,
+                        message: `会话及音频素材已成功导出并转码为 MP3！\n保存路径：${normalizedPath}`,
                         type: "success",
-                        buttonText: "压缩并打开目录",
-                        onConfirm: zipAndOpenExportFolder,
+                        buttonText: "太棒了",
                     },
                 });
             }
@@ -124,10 +164,18 @@ export default function ExportSession() {
     };
 
     return (
-        <Center>
+        <Group justify="center" align="top" wrap="nowrap" gap="sm">
             <Button onClick={handleExport} loading={loading}>
                 导出会话
             </Button>
-        </Center>
+            <Button onClick={openExportFolder} loading={loading}>
+                打开目录
+            </Button>
+            <Tooltip label="请在导出完成后再压缩">
+                <Button onClick={zipExportFolder} loading={loading}>
+                    压缩目录
+                </Button>
+            </Tooltip>
+        </Group>
     );
 }
