@@ -3,7 +3,7 @@
 # 获取脚本所在的当前目录
 cd "$(dirname "$0")" || exit
 
-DEST_DIR="$HOME/Library/Application Support/Adobe/CEP/extensions/Recording-Assistant"
+DEST_DIR="$HOME/Library/Application Support/Adobe/CEP/extensions/Project-Manager"
 
 echo "[1/2] 正在准备插件目录..."
 
