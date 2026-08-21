@@ -11,7 +11,7 @@ export default function ExportSession() {
     const handleExport = async () => {
         setLoading(true);
         try {
-            const result = await evalTS("exportCurrentSession");
+            const result = await evalTS("exportCurrentSession", "导出内容");
 
             if (result.startsWith("Error: NoActive")) {
                 modals.openContextModal({

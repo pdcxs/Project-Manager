@@ -22,8 +22,16 @@ export default function Header() {
         if (result.err === 0 && result.data && result.data.length > 0) {
             let rawPath = result.data[0];
             if (rawPath.startsWith("file://")) {
-            rawPath = rawPath.replace(/^file:\/\/(localhost)?/, "");
-        }
+                rawPath = rawPath.replace(/^file:\/\/(localhost)?/, "");
+            }
+
+            // 2. 将 %xx 格式的 URL 编码还原为正常的中文/特殊字符
+            rawPath = decodeURIComponent(rawPath);
+
+            // 3. (可选) Windows 平台兼容处理：去除开头多余的正斜杠（如 /C:/Users/... -> C:/Users/...）
+            if (navigator.platform.toUpperCase().indexOf('WIN') > -1) {
+                rawPath = rawPath.replace(/^\/([a-zA-Z]:)/, '$1');
+            }
             setWorkspacePath(rawPath);
         }
     };
