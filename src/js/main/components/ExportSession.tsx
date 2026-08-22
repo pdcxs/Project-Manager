@@ -33,7 +33,7 @@ export default function ExportSession() {
                     modal: "alertModal",
                     title: "会话未导出",
                     innerProps: {
-                        message: "当前多轨会话未导出，请先导出后再打开",
+                        message: "当前会话未导出，请先导出后再打开",
                         type: "error",
                     },
                 });
@@ -61,7 +61,7 @@ export default function ExportSession() {
                     modal: "alertModal",
                     title: "无法导出会话",
                     innerProps: {
-                        message: "当前没有打开的多轨会话，请先打开或创建会话。",
+                        message: "当前没有打开的会话，请先打开或创建会话。",
                         type: "error",
                     },
                 });
@@ -74,7 +74,7 @@ export default function ExportSession() {
                     modal: "alertModal",
                     title: "会话未保存",
                     innerProps: {
-                        message: "当前多轨会话未保存，请先保存工程（Ctrl+S）后再重试。",
+                        message: "当前会话未保存，请先保存会话（Ctrl+S）后再重试。",
                         type: "error",
                     },
                 });
@@ -147,7 +147,19 @@ export default function ExportSession() {
         }
     };
 
-    const handleZip = () => {
+    const handleZip = async () => {
+        const sp = await getExportSessionFolder();
+        if (sp === "") {
+            modals.openContextModal({
+                modal: "alertModal",
+                title: "会话未导出",
+                innerProps: {
+                    message: "当前会话未导出，请先导出后再压缩",
+                    type: "error",
+                },
+            });
+            return;
+        }
         modals.openConfirmModal({
             title: "会话打包确认",
             children: (
@@ -157,18 +169,6 @@ export default function ExportSession() {
             ),
             labels: { confirm: "我确认会话已经完全导出，开始打包", cancel: "稍后再试" },
             onConfirm: async () => {
-                const sp = await getExportSessionFolder();
-                if (sp === "") {
-                    modals.openContextModal({
-                        modal: "alertModal",
-                        title: "会话未导出",
-                        innerProps: {
-                            message: "当前多轨会话未导出，请先导出后再压缩",
-                            type: "error",
-                        },
-                    });
-                    return;
-                }
                 setLoading(true);
                 await zipDirectory(sp, `${sp}.zip`);
                 await openExportFolder();

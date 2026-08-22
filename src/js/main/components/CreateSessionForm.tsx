@@ -726,9 +726,9 @@ export default function CreateSessionForm() {
     if (!fs.existsSync(workspacePath)) {
       modals.openContextModal({
         modal: "alertModal",
-        title: "新建工程路径无效",
+        title: "新建会话路径无效",
         innerProps: {
-          message: "当前设置的工程（会话/多轨）路径在磁盘上不存在，请重新选择。",
+          message: "当前设置的会话保存路径在磁盘上不存在，请重新选择。",
           type: "error",
         },
       });
@@ -744,7 +744,7 @@ export default function CreateSessionForm() {
         innerProps: {
           message: (
             <>
-              工作区中已存在名为 <Text span fw={700}>“{values.sessionName.trim()}”</Text> 的工程（会话/多轨）文件夹，请更换会话名称。
+              工作区中已存在名为 <Text span fw={700}>“{values.sessionName.trim()}”</Text> 的会话文件夹，请更换会话名称。
             </>
           ),
           type: "error",
