@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Group, Tooltip } from "@mantine/core";
+import { Button, Group, Tooltip, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { evalTS } from "../../lib/utils/bolt";
 import { child_process, path, fs } from "../../lib/cep/node";
@@ -21,22 +21,6 @@ export default function ExportSession() {
         if (fs.existsSync(r))
             return r;
         return "";
-    }
-
-    const zipExportFolder = async () => {
-        const sp = await getExportSessionFolder();
-        if (sp === "") {
-            modals.openContextModal({
-                modal: "alertModal",
-                title: "会话未导出",
-                innerProps: {
-                    message: "当前多轨会话未导出，请先导出后再压缩",
-                    type: "error",
-                },
-            });
-            return;
-        }
-        await zipDirectory(sp, `${sp}.zip`);
     }
 
     const openExportFolder = async () => {
@@ -163,6 +147,36 @@ export default function ExportSession() {
         }
     };
 
+    const handleZip = () => {
+        modals.openConfirmModal({
+            title: "会话打包确认",
+            children: (
+                <Text c="red" style={{ "fontWeight": "bold" }}>
+                    请在会话完全导出后，再打包会话。如果还未导出或者正在导出中，请不要打包。
+                </Text>
+            ),
+            labels: { confirm: "我确认会话已经完全导出，开始打包", cancel: "稍后再试" },
+            onConfirm: async () => {
+                const sp = await getExportSessionFolder();
+                if (sp === "") {
+                    modals.openContextModal({
+                        modal: "alertModal",
+                        title: "会话未导出",
+                        innerProps: {
+                            message: "当前多轨会话未导出，请先导出后再压缩",
+                            type: "error",
+                        },
+                    });
+                    return;
+                }
+                setLoading(true);
+                await zipDirectory(sp, `${sp}.zip`);
+                await openExportFolder();
+                setLoading(false);
+            }
+        })
+    }
+
     return (
         <Group justify="center" align="top" wrap="nowrap" gap="sm">
             <Button onClick={handleExport} loading={loading}>
@@ -172,8 +186,8 @@ export default function ExportSession() {
                 打开目录
             </Button>
             <Tooltip label="请在导出完成后再压缩">
-                <Button onClick={zipExportFolder} loading={loading}>
-                    压缩目录
+                <Button onClick={handleZip} loading={loading}>
+                    打包会话
                 </Button>
             </Tooltip>
         </Group>
