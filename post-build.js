@@ -43,10 +43,28 @@ async function postBuild() {
       }
     }
 
+    // 4. 递归删除目标目录下的所有 .map 文件
+    if (fs.existsSync(distPath)) {
+      console.log("正在清理所有 .map Sourcemap 文件...");
+      await deleteMapFiles(distPath);
+    }
+
     console.log("Post-build 成功完成！");
   } catch (err) {
     console.error("执行出错:", err);
     process.exit(1);
+  }
+}
+
+async function deleteMapFiles(dirPath) {
+  const entries = await fs.readdir(dirPath, { recursive: true, withFileTypes: true });
+
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith('.map')) {
+      const fullPath = path.join(entry.path || entry.parentPath || dirPath, entry.name);
+      await fs.remove(fullPath);
+      console.log(`已删除 map 文件: ${path.relative(dirPath, fullPath)}`);
+    }
   }
 }
 
