@@ -63,8 +63,8 @@ export function exportCurrentSession(exportFolderNameEncoded?: string): string {
       return "Error: NoSave";
     }
 
-    var folderName = exportFolderNameEncoded 
-      ? decodeURIComponent(exportFolderNameEncoded) 
+    var folderName = exportFolderNameEncoded
+      ? decodeURIComponent(exportFolderNameEncoded)
       : "Export";
 
     var currentFile = new File(doc.path);
@@ -85,6 +85,7 @@ export function exportCurrentSession(exportFolderNameEncoded?: string): string {
     var AudioFileFormatClass = eval("AudioFileFormat");
 
     var waveExportParams = new WaveExportParamsClass();
+    waveExportParams.includeMetadata = true;
 
     if (AudioFileFormatClass && AudioFileFormatClass.FORMAT_MP3_) {
       waveExportParams.fileFormat = new AudioFileFormatClass(AudioFileFormatClass.FORMAT_MP3_);
